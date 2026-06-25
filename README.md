@@ -18,7 +18,7 @@ This design matters in regulated and high-stakes contexts. Because the model can
 
 The system is organised into three layers separated by a strict LLM boundary. The **chat UI** (a single HTML file) sends natural language messages to the **FastAPI server**, which invokes the **Groq agent**. The agent calls `llama-3.3-70b-versatile` with tool schemas; when the model issues a tool call, the agent dispatches it to one of the five typed Python functions in `tools/portfolio_tools.py`, which in turn fetches market data through `tools/market_data.py` (the only file that may call yfinance). The LLM never crosses the boundary into the data layer — it sees tool schemas and JSON results, nothing else.
 
-## The five tools
+## The six tools
 
 | Tool | What it answers | Key metric |
 |---|---|---|
@@ -27,6 +27,7 @@ The system is organised into three layers separated by a strict LLM boundary. Th
 | `get_correlation_matrix` | How correlated are the holdings? | Average pairwise correlation |
 | `get_sector_exposure` | What sectors am I exposed to? | Sector weight breakdown, concentration flag |
 | `get_as_of_snapshot` | How did it look on a specific past date? | Point-in-time total and annualised return |
+| `get_news_context` | Why did a stock move? What's in the news? | RAG-retrieved headline context via NewsAPI + ChromaDB |
 
 ## Quick start
 
@@ -43,10 +44,10 @@ The system is organised into three layers separated by a strict LLM boundary. Th
    pip install -r requirements.txt
    ```
 
-3. **Configure your API key**
+3. **Configure your API keys**
    ```bash
    cp .env.example .env
-   # Edit .env and set GROQ_API_KEY=your_actual_key
+   # Edit .env — set GROQ_API_KEY (required) and NEWSAPI_KEY (optional, enables get_news_context)
    ```
 
 4. **Pre-populate the fallback cache** (recommended before demos or CI)
@@ -72,6 +73,7 @@ The system is organised into three layers separated by a strict LLM boundary. Th
 - "How did my portfolio perform as of 2024-06-30?"
 - "Compare my annualised return to the S&P 500 benchmark."
 - "How did the portfolio's risk metrics look over the last 90 days?"
+- "Why has NVDA been in the news this week?"
 
 ## Design decisions
 
@@ -92,7 +94,7 @@ Portfolio Sentinel is intentionally read-only. It does not execute trades, place
 - **Structured JSON logging with request IDs** — every `/chat` request writes a JSON line to `logs/app.log` (rotating, 10 MB × 5 files) with `request_id`, `tickers`, `message_preview`, `tool_calls_made`, `latency_ms`, and `status`.
 - **Evaluation log capturing every tool call with latency** — `eval/eval_log.jsonl` records tool name, inputs, outputs, latency, and a `grounded` flag for human review.
 - **Eval dashboard** at `/eval/summary` (JSON) and `/static/eval.html` (UI) — shows total calls, grounded rate, average latency, and a per-tool call breakdown.
-- **Automated benchmark suite** at `/benchmark` — 8 questions covering all five tools; reports pass/fail per question and overall pass rate. UI at `/static/benchmark.html`.
+- **Automated benchmark suite** at `/benchmark` — 10 questions covering all six tools; reports pass/fail per question and overall pass rate. UI at `/static/benchmark.html`.
 - **Health check endpoint** at `/health` — returns model name, active tickers, cache status, and UTC timestamp.
 - **AIB Group (A5G.IR, Euronext Dublin)** included as Irish market representation, with automatic fallback to CRH if the ticker is unavailable.
 

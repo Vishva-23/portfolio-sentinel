@@ -7,3 +7,4 @@ __pycache__/
 fallback_cache.json
 logs/*.log
 eval/eval_log.jsonl
+chroma_store/

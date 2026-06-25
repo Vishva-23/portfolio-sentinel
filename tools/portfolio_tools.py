@@ -76,6 +76,8 @@ import numpy as np
 import pandas as pd
 
 from tools.market_data import get_prices, get_info
+from tools.news_fetcher import fetch_news
+from tools.rag_pipeline import embed_and_store, retrieve_context
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -560,4 +562,45 @@ def get_as_of_snapshot(
         "start_date": port_returns.index[0].strftime("%Y-%m-%d"),
         "end_date": port_returns.index[-1].strftime("%Y-%m-%d"),
         "trading_days": n,
+    }
+
+
+def get_news_context(tickers: list[str], query: str) -> dict[str, Any]:
+    """Fetch recent news and retrieve semantically relevant context for tickers.
+
+    For each ticker: fetches headlines from NewsAPI, embeds and stores them in
+    ChromaDB, then retrieves the chunks most relevant to ``query``.
+
+    Parameters
+    ----------
+    tickers:
+        List of Yahoo Finance ticker symbols to fetch news for.
+    query:
+        Natural-language description of what to search for in the news.
+
+    Returns
+    -------
+    dict
+        Keys: ``tickers``, ``query``, ``results`` (list of per-ticker dicts
+        with ``ticker`` and ``retrieved_chunks``), ``total_articles_fetched``,
+        ``note``.
+    """
+    results: list[dict] = []
+    total_fetched = 0
+    for ticker in tickers:
+        articles = fetch_news(ticker)
+        total_fetched += len(articles)
+        if articles:
+            embed_and_store(ticker, articles)
+        chunks = retrieve_context(ticker, query)
+        results.append({"ticker": ticker, "retrieved_chunks": chunks})
+    return {
+        "tickers": tickers,
+        "query": query,
+        "results": results,
+        "total_articles_fetched": total_fetched,
+        "note": (
+            "News data is unstructured and unverified. "
+            "Use for context only, not as the basis for financial decisions."
+        ),
     }

@@ -24,6 +24,7 @@ from tools.portfolio_tools import (
     get_correlation_matrix,
     get_sector_exposure,
     get_as_of_snapshot,
+    get_news_context,
 )
 
 load_dotenv()
@@ -242,6 +243,37 @@ TOOL_SCHEMAS: list[dict] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_news_context",
+            "description": (
+                "Retrieve recent news headlines and context for portfolio tickers "
+                "using semantic search. Use this when the user asks why a stock "
+                "moved, what the current sentiment is, or for qualitative context "
+                "alongside quantitative metrics."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "tickers": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of Yahoo Finance ticker symbols to fetch news for.",
+                    },
+                    "query": {
+                        "type": "string",
+                        "description": (
+                            "Natural-language description of what information to find. "
+                            "For example: 'why did NVDA drop this week' or "
+                            "'recent earnings news for AAPL'."
+                        ),
+                    },
+                },
+                "required": ["tickers", "query"],
+            },
+        },
+    },
 ]
 
 _TOOL_DISPATCH: dict[str, Any] = {
@@ -250,6 +282,7 @@ _TOOL_DISPATCH: dict[str, Any] = {
     "get_correlation_matrix": get_correlation_matrix,
     "get_sector_exposure": get_sector_exposure,
     "get_as_of_snapshot": get_as_of_snapshot,
+    "get_news_context": get_news_context,
 }
 
 

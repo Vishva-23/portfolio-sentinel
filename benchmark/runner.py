@@ -48,6 +48,14 @@ BENCHMARK_QUESTIONS: list[dict[str, str]] = [
         "question": "What was my annualised return over the last 180 days?",
         "expected_tool": "get_portfolio_summary",
     },
+    {
+        "question": "Why might NVDA have moved recently?",
+        "expected_tool": "get_news_context",
+    },
+    {
+        "question": "What is the current market sentiment on my portfolio?",
+        "expected_tool": "get_news_context",
+    },
 ]
 
 

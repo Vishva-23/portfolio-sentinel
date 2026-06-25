@@ -22,6 +22,7 @@ from tools.portfolio_tools import (
     get_correlation_matrix,
     get_sector_exposure,
     get_as_of_snapshot,
+    get_news_context,
 )
 
 
@@ -241,3 +242,49 @@ class TestGetAsOfSnapshot:
         as_of = (date.today() - timedelta(days=60)).strftime("%Y-%m-%d")
         result = get_as_of_snapshot(TICKERS, WEIGHTS, as_of)
         assert isinstance(result["total_return"], float)
+
+
+# ---------------------------------------------------------------------------
+# get_news_context
+# ---------------------------------------------------------------------------
+
+@patch("tools.portfolio_tools.retrieve_context", return_value=["chunk1", "chunk2"])
+@patch("tools.portfolio_tools.embed_and_store", return_value=2)
+@patch("tools.portfolio_tools.fetch_news", return_value=[{"title": "Test", "description": "Desc", "url": "http://x.com", "published_at": "2025-01-01", "source": "Reuters"}])
+class TestGetNewsContext:
+    def test_expected_keys(self, _fn, _es, _rc) -> None:
+        result = get_news_context(["AAPL"], "recent earnings")
+        assert {"tickers", "query", "results", "total_articles_fetched", "note"}.issubset(result.keys())
+
+    def test_one_result_per_ticker(self, _fn, _es, _rc) -> None:
+        result = get_news_context(["AAPL", "MSFT"], "earnings")
+        assert len(result["results"]) == 2
+
+    def test_result_has_ticker_and_chunks(self, _fn, _es, _rc) -> None:
+        result = get_news_context(["AAPL"], "earnings")
+        assert result["results"][0]["ticker"] == "AAPL"
+        assert "retrieved_chunks" in result["results"][0]
+
+    def test_total_articles_fetched(self, _fn, _es, _rc) -> None:
+        result = get_news_context(["AAPL", "MSFT"], "earnings")
+        assert result["total_articles_fetched"] == 2
+
+    def test_empty_when_no_news(self, _fn, _es, _rc) -> None:
+        _fn.return_value = []
+        _rc.return_value = []
+        result = get_news_context(["AAPL"], "earnings")
+        assert result["total_articles_fetched"] == 0
+        assert result["results"][0]["retrieved_chunks"] == []
+
+    def test_note_is_string(self, _fn, _es, _rc) -> None:
+        result = get_news_context(["AAPL"], "test")
+        assert isinstance(result["note"], str)
+
+    def test_query_echoed(self, _fn, _es, _rc) -> None:
+        result = get_news_context(["AAPL"], "why did NVDA drop")
+        assert result["query"] == "why did NVDA drop"
+
+    def test_embed_not_called_when_no_articles(self, _fn, _es, _rc) -> None:
+        _fn.return_value = []
+        get_news_context(["AAPL"], "test")
+        _es.assert_not_called()
