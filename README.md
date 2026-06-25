@@ -1,6 +1,12 @@
 # Portfolio Sentinel
 
+**Live demo: https://portfolio-sentinel.onrender.com**
+
 A conversational portfolio analytics agent: chat in natural language, get precise historical performance and risk metrics powered by typed Python tools and a Groq LLM.
+
+## Demo
+
+<!-- Add Loom demo link here -->
 
 ## What this is
 
