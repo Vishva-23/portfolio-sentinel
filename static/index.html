@@ -46,22 +46,45 @@
       flex-shrink: 0;
     }
 
-    header h1 {
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .header-left h1 {
       font-size: 1.35rem;
       font-weight: 700;
       letter-spacing: -0.02em;
       color: #fff;
     }
 
-    header h1 span {
+    .header-left h1 span {
       color: var(--accent);
     }
 
-    header p {
+    .header-left p {
       font-size: 0.78rem;
       color: var(--muted);
       margin-top: 2px;
     }
+
+    .nav-links {
+      display: flex;
+      gap: 14px;
+      align-self: center;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.78rem;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--accent); }
 
     /* ---- portfolio pills ---- */
     #portfolio-bar {
@@ -224,8 +247,14 @@
 <body>
 <div id="app">
   <header>
-    <h1>Portfolio <span>Sentinel</span></h1>
-    <p>portfolio analytics agent</p>
+    <div class="header-left">
+      <h1>Portfolio <span>Sentinel</span></h1>
+      <p>portfolio analytics agent</p>
+    </div>
+    <nav class="nav-links">
+      <a href="/static/eval.html">Eval dashboard</a>
+      <a href="/static/benchmark.html">Benchmark</a>
+    </nav>
   </header>
 
   <div id="portfolio-bar"></div>
@@ -246,7 +275,7 @@
   // ---------------------------------------------------------------------------
   // Config
   // ---------------------------------------------------------------------------
-  const DEFAULT_TICKERS = ["AAPL", "MSFT", "NVDA", "GOOGL", "CRH"];
+  const DEFAULT_TICKERS = ["AAPL", "MSFT", "NVDA", "GOOGL", "A5G.IR"];
   const DEFAULT_WEIGHTS = [0.25, 0.20, 0.25, 0.20, 0.10];
 
   let conversationHistory = [];

@@ -25,7 +25,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from tools.market_data import get_prices, get_info  # noqa: E402
 
-DEFAULT_TICKERS = ["AAPL", "MSFT", "NVDA", "GOOGL", "CRH"]
+DEFAULT_TICKERS = ["AAPL", "MSFT", "NVDA", "GOOGL", "A5G.IR"]
 BENCHMARK_TICKER = "^GSPC"
 LOOKBACK_DAYS = 400
 

@@ -81,6 +81,15 @@ Allowing the model to generate and execute arbitrary queries or code creates an 
 
 Portfolio Sentinel is intentionally read-only. It does not execute trades, place orders, or connect to any brokerage API. It does not generate price predictions or forecasts. It does not give investment advice. The system prompt instructs the model to decline such requests explicitly. This is a design constraint, not a technical limitation — removing it would require deliberate changes to both the agent configuration and the tool layer.
 
+## Production features
+
+- **Structured JSON logging with request IDs** — every `/chat` request writes a JSON line to `logs/app.log` (rotating, 10 MB × 5 files) with `request_id`, `tickers`, `message_preview`, `tool_calls_made`, `latency_ms`, and `status`.
+- **Evaluation log capturing every tool call with latency** — `eval/eval_log.jsonl` records tool name, inputs, outputs, latency, and a `grounded` flag for human review.
+- **Eval dashboard** at `/eval/summary` (JSON) and `/static/eval.html` (UI) — shows total calls, grounded rate, average latency, and a per-tool call breakdown.
+- **Automated benchmark suite** at `/benchmark` — 8 questions covering all five tools; reports pass/fail per question and overall pass rate. UI at `/static/benchmark.html`.
+- **Health check endpoint** at `/health` — returns model name, active tickers, cache status, and UTC timestamp.
+- **AIB Group (A5G.IR, Euronext Dublin)** included as Irish market representation, with automatic fallback to CRH if the ticker is unavailable.
+
 ## Stack
 
 - **Python 3.11+**
@@ -92,4 +101,4 @@ Portfolio Sentinel is intentionally read-only. It does not execute trades, place
 
 ---
 
-The default portfolio includes **CRH** (CRH plc on the NYSE), Ireland's largest company by market cap, as the international market representation.
+The default portfolio includes **A5G.IR** (AIB Group plc, listed on Euronext Dublin), Ireland's largest retail bank by assets, included deliberately to represent the Irish market. If A5G.IR is unavailable from yfinance at startup, the application substitutes CRH (NYSE) automatically and logs a warning.

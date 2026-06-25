@@ -10,10 +10,13 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from typing import Any
 
 from dotenv import load_dotenv
 from groq import Groq
+
+from eval.eval_logger import get_request_id, log_eval_entry
 
 from tools.portfolio_tools import (
     get_portfolio_summary,
@@ -253,14 +256,26 @@ _TOOL_DISPATCH: dict[str, Any] = {
 def _execute_tool(name: str, arguments: dict) -> str:
     """Dispatch a tool call and return the result as a JSON string.
 
-    If the tool raises, the exception message is returned as the result so
-    the model can relay it to the user rather than crashing the request.
+    Times the call, writes an eval log entry on success, and records the tool
+    name in the per-request ContextVar accumulator. If the tool raises, the
+    exception message is returned as the tool result so the model can relay it
+    to the user rather than crashing the request.
     """
     fn = _TOOL_DISPATCH.get(name)
     if fn is None:
         return json.dumps({"error": f"Unknown tool: {name}"})
     try:
+        t0 = time.time()
         result = fn(**arguments)
+        latency_ms = round((time.time() - t0) * 1000, 2)
+        log_eval_entry(
+            request_id=get_request_id(),
+            tool_name=name,
+            inputs=arguments,
+            outputs=result,
+            latency_ms=latency_ms,
+            grounded=True,
+        )
         return json.dumps(result, default=str)
     except Exception as exc:
         return json.dumps({"error": str(exc)})

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Sentinel — Benchmark</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f0f0f;
+      --surface: #1a1a1a;
+      --border:  #2a2a2a;
+      --accent:  #6366f1;
+      --text:    #e4e4e7;
+      --muted:   #71717a;
+      --green:   #4ade80;
+      --red:     #f87171;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 0 16px 40px;
+    }
+
+    .page { max-width: 960px; margin: 0 auto; }
+
+    header {
+      padding: 22px 0 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    header h1 { font-size: 1.2rem; font-weight: 700; color: #fff; }
+    header h1 span { color: var(--accent); }
+    .nav-links { display: flex; gap: 16px; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-links a.active { color: var(--accent); }
+
+    /* ---- summary bar ---- */
+    #summary-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .summary-stat { text-align: center; }
+    .summary-stat .s-val {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .summary-stat .s-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .pass-rate-track {
+      flex: 1;
+      min-width: 200px;
+      height: 10px;
+      background: var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .pass-rate-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 5px;
+      transition: width 0.5s ease;
+    }
+
+    /* ---- run button area ---- */
+    .run-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover:not(:disabled) { opacity: 0.85; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    #run-status { font-size: 0.82rem; color: var(--muted); }
+
+    /* ---- results table ---- */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
+    tbody td { padding: 10px 14px; color: var(--text); vertical-align: top; }
+    tbody tr:hover td { background: #1f1f2e; }
+
+    .q-text { max-width: 320px; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge.pass { background: #14532d; color: var(--green); }
+    .badge.fail { background: #450a0a; color: var(--red); }
+
+    .tool-tag {
+      display: inline-block;
+      background: #27272a;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: monospace;
+      white-space: nowrap;
+    }
+
+    #empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Portfolio <span>Sentinel</span> — Benchmark</h1>
+    <nav class="nav-links">
+      <a href="/">Chat</a>
+      <a href="/static/eval.html">Eval</a>
+      <a href="/static/benchmark.html" class="active">Benchmark</a>
+    </nav>
+  </header>
+
+  <div id="summary-bar" style="display:none">
+    <div class="summary-stat">
+      <div class="s-val" id="s-passed" style="color:var(--green)">—</div>
+      <div class="s-label">Passed</div>
+    </div>
+    <div class="summary-stat">
+      <div class="s-val" id="s-failed" style="color:var(--red)">—</div>
+      <div class="s-label">Failed</div>
+    </div>
+    <div class="summary-stat">
+      <div class="s-val" id="s-rate">—</div>
+      <div class="s-label">Pass rate</div>
+    </div>
+    <div class="pass-rate-track">
+      <div class="pass-rate-fill" id="pass-rate-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="run-area">
+    <button id="run-btn">Run Benchmark</button>
+    <span id="run-status">8 questions covering all five tools</span>
+  </div>
+
+  <div class="table-wrap">
+    <div id="empty-state">Click "Run Benchmark" to start.</div>
+    <table id="results-table" style="display:none">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Question</th>
+          <th>Expected tool</th>
+          <th>Actual tools called</th>
+          <th>Latency (ms)</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="results-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.getElementById("run-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("run-btn");
+    const status = document.getElementById("run-status");
+    btn.disabled = true;
+    status.textContent = "Running 8 benchmark questions… this may take 30–60 s";
+
+    document.getElementById("summary-bar").style.display = "none";
+    document.getElementById("results-table").style.display = "none";
+    document.getElementById("empty-state").style.display = "block";
+    document.getElementById("empty-state").textContent = "Running…";
+
+    try {
+      const resp = await fetch("/benchmark", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+        throw new Error(err.detail || resp.statusText);
+      }
+
+      const data = await resp.json();
+      const { results, summary } = data;
+
+      // Summary bar
+      document.getElementById("s-passed").textContent = summary.passed;
+      document.getElementById("s-failed").textContent = summary.failed;
+      document.getElementById("s-rate").textContent = (summary.pass_rate * 100).toFixed(0) + "%";
+      document.getElementById("pass-rate-fill").style.width = (summary.pass_rate * 100).toFixed(1) + "%";
+      document.getElementById("summary-bar").style.display = "flex";
+
+      // Results table
+      const tbody = document.getElementById("results-tbody");
+      tbody.innerHTML = results.map((r, i) => {
+        const q = r.question.length > 60 ? r.question.slice(0, 57) + "…" : r.question;
+        const actualTags = (r.actual_tools_called || []).map(t =>
+          `<span class="tool-tag">${t}</span>`).join(" ") || '<span style="color:var(--muted)">none</span>';
+        const badge = r.passed
+          ? '<span class="badge pass">PASS</span>'
+          : '<span class="badge fail">FAIL</span>';
+        return `<tr>
+          <td>${i + 1}</td>
+          <td class="q-text">${q}</td>
+          <td><span class="tool-tag">${r.expected_tool}</span></td>
+          <td>${actualTags}</td>
+          <td>${r.latency_ms.toFixed(0)}</td>
+          <td>${badge}</td>
+        </tr>`;
+      }).join("");
+
+      document.getElementById("empty-state").style.display = "none";
+      document.getElementById("results-table").style.display = "table";
+      status.textContent = `Done — ${summary.passed}/${summary.total} passed`;
+    } catch (err) {
+      document.getElementById("empty-state").textContent = "Error: " + err.message;
+      status.textContent = "Benchmark failed.";
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
